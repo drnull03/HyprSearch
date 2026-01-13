@@ -1,4 +1,4 @@
-package com.ds.LeaderElection;
+package com.ds.HyprSearch;
 
 import org.apache.zookeeper.ZooKeeper;
 import java.io.IOException;

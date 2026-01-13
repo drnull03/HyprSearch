@@ -1,4 +1,4 @@
-package com.ds.LeaderElection;
+package com.ds.HyprSearch;
 
 public class App {
 
