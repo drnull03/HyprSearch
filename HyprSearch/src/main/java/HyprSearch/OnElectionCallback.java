@@ -1,4 +1,4 @@
-package Registration_Discovery;
+package HyprSearch;
 
 public interface OnElectionCallback {
 

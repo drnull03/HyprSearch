@@ -1,4 +1,4 @@
-package Registration_Discovery;
+package HyprSearch;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
