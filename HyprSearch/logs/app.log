@@ -1,0 +1,4 @@
+2024-01-16 10:35:09,211 INFO Registration_Discovery.Application [main] Connected
+2024-01-16 10:35:19,177 DEBUG Registration_Discovery.Application [main-EventThread] Successfully connected to Zookeeper
+2024-01-16 10:35:19,277 INFO Registration_Discovery.LeaderElection [main] I'm a leader
+2024-01-16 10:35:19,296 INFO Registration_Discovery.ServiceRegistry [main] The cluster addresses are: []
