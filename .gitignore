@@ -1,2 +1,6 @@
-/dataset/20_newsgroups
+/full_dataset/
 **/target/
+**/logs/
+**/dataset/
+**/node_modules/
+

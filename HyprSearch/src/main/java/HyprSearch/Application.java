@@ -1,47 +1,51 @@
 package HyprSearch;
 
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class Application implements Watcher {
 
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
-    private static final String address = "172.29.3.101:2181";
-    private static final int SESSION_TIMEOUT = 3000; //dead client
+    private static final String ZK_ADDRESS = "localhost:2181"; // IMPORTANT
+    private static final int SESSION_TIMEOUT = 3000;
     private static final int DEFAULT_PORT = 8080;
+
     private ZooKeeper zooKeeper;
+    private final CountDownLatch connectedSignal = new CountDownLatch(1);
 
-    public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
+    public static void main(String[] args) throws Exception {
 
-        int currentServerPort = args.length == 1 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        int currentServerPort =
+                args.length == 1 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+
         Application application = new Application();
         ZooKeeper zooKeeper = application.connectToZookeeper();
 
-        logger.info("Connected");
+        
+        application.connectedSignal.await();
+        logger.info("ZooKeeper connected");
 
         ServiceRegistry serviceRegistry = new ServiceRegistry(zooKeeper);
+        OnElectionAction onElectionAction =
+                new OnElectionAction(serviceRegistry, currentServerPort);
 
-        OnElectionAction onElectionAction = new OnElectionAction(serviceRegistry, currentServerPort);
+        LeaderElection leaderElection =
+                new LeaderElection(zooKeeper, onElectionAction);
 
-        LeaderElection leaderElection = new LeaderElection(zooKeeper, onElectionAction);
         leaderElection.volunteerForLeadership();
         leaderElection.reelectLeader();
 
         application.run();
         application.close();
-
-
     }
 
     public ZooKeeper connectToZookeeper() throws IOException {
-        this.zooKeeper = new ZooKeeper(address, SESSION_TIMEOUT, this);
+        this.zooKeeper = new ZooKeeper(ZK_ADDRESS, SESSION_TIMEOUT, this);
         return zooKeeper;
     }
 
@@ -52,27 +56,21 @@ public class Application implements Watcher {
     }
 
     private void close() throws InterruptedException {
-        this.zooKeeper.close();
+        zooKeeper.close();
     }
 
     @Override
-    public void process(WatchedEvent watchedEvent) {
-        switch (watchedEvent.getType()) {
-            case None:
-                if (watchedEvent.getState() == Event.KeeperState.SyncConnected) {
-//                    System.out.println("Successfully connected to Zookeeper");
-                    logger.debug("Successfully connected to Zookeeper");
-                } else if (watchedEvent.getState() == Event.KeeperState.Disconnected) {
-                    synchronized (zooKeeper) {
-//                        System.out.println("Disconnected from Zookeeper");
-                        logger.debug("Disconnected from Zookeeper");
-                        zooKeeper.notifyAll();
-                    }
-                } else if (watchedEvent.getState() == Event.KeeperState.Closed) {
-//                    System.out.println("Closed Successfully");
-                    logger.debug("Closed Successfully");
-                }
-                break;
+    public void process(WatchedEvent event) {
+        if (event.getState() == Event.KeeperState.SyncConnected) {
+            connectedSignal.countDown();
+        }
+
+        if (event.getState() == Event.KeeperState.Disconnected ||
+            event.getState() == Event.KeeperState.Expired) {
+
+            synchronized (zooKeeper) {
+                zooKeeper.notifyAll();
+            }
         }
     }
 }

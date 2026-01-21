@@ -1,0 +1,2 @@
+POST http://localhost:8080/search
+body: "physics math and some more stuff"
