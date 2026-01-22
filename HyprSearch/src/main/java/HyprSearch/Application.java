@@ -11,9 +11,9 @@ public class Application implements Watcher {
 
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
-    private static final String ZK_ADDRESS = "localhost:2181"; // IMPORTANT
+    private static final String ZK_ADDRESS = "localhost:2181"; 
     private static final int SESSION_TIMEOUT = 3000;
-    private static final int DEFAULT_PORT = 8080;
+    private static final int DEFAULT_PORT = 5555;
 
     private ZooKeeper zooKeeper;
     private final CountDownLatch connectedSignal = new CountDownLatch(1);
